@@ -1,13 +1,17 @@
 class ApiConfig {
-  static const String baseUrl = "https://api.openweathermap.org/data/2.5";
+  static const String baseUrl = 'https://api.openweathermap.org/data/2.5';
+  static const String apiKey = String.fromEnvironment('OPENWEATHER_API_KEY');
 
-  static const String apiKey = "1cedfda23d518d1e99b181dfbf0b1eb3";
+  // Endpoints
+  static const String currentWeather = '/weather';
+  static const String forecast = '/forecast';
+  static const String oneCall = '/onecall';
 
-  static String currentWeather(String city) {
-    return "$baseUrl/weather?q=$city&appid=$apiKey&units=metric";
-  }
-
-  static String forecast(String city) {
-    return "$baseUrl/forecast?q=$city&appid=$apiKey&units=metric";
+  // Build URL
+  static String buildUrl(String endpoint, Map<String, dynamic> params) {
+    final uri = Uri.parse('$baseUrl$endpoint');
+    params['appid'] = apiKey;
+    params['units'] = 'metric'; // Sử dụng độ C
+    return uri.replace(queryParameters: params).toString();
   }
 }
