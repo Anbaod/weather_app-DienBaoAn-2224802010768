@@ -1,17 +1,7 @@
-# weather_app
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Video Demo: 
+Ảnh app:
+<img width="1896" height="1012" alt="image" src="https://github.com/user-attachments/assets/ee10d644-5a10-4459-a128-265ecbee7bfd" />
+<img width="1913" height="1012" alt="image" src="https://github.com/user-attachments/assets/31ae2969-8800-482d-9bad-f1e4b2cad23d" />
+<img width="1910" height="904" alt="image" src="https://github.com/user-attachments/assets/803347c6-028c-4d3e-b283-0a1095f8c5c1" />
+<img width="1910" height="1009" alt="image" src="https://github.com/user-attachments/assets/32a5568d-b083-47f2-b806-f518f8ed5b1c" />
+<img width="1915" height="1006" alt="image" src="https://github.com/user-attachments/assets/be5bf883-7ec0-4d1b-b0e9-89d9a622f114" />
