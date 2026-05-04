@@ -5,13 +5,11 @@ class WeatherUtils {
     if (condition == null) return [Colors.blue, Colors.lightBlueAccent];
 
     switch (condition.toLowerCase()) {
-    // Trời nắng/trong xanh
       case 'clear':
         return [const Color(0xFFFFB74D), const Color(0xFFFFA726)];
-    // Nhiều mây
       case 'clouds':
         return [const Color(0xFF90A4AE), const Color(0xFF607D8B)];
-    // Mưa
+
       case 'rain':
       case 'drizzle':
       case 'thunderstorm':

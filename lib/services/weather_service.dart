@@ -5,69 +5,91 @@ import '../models/forecast_model.dart';
 import '../config/api_config.dart';
 
 class WeatherService {
-  // Lấy thời tiết hiện tại theo tên thành phố
+
   Future<WeatherModel> getCurrentWeatherByCity(String cityName) async {
     try {
       final url = ApiConfig.buildUrl(
         ApiConfig.currentWeather,
         {'q': cityName},
       );
+
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         return WeatherModel.fromJson(json.decode(response.body));
       } else if (response.statusCode == 404) {
-        throw Exception('City not found');
+        throw Exception('Không tìm thấy thành phố');
       } else {
-        throw Exception('Failed to load weather data');
+        throw Exception('Lỗi lấy dữ liệu thời tiết');
       }
     } catch (e) {
-      throw Exception('Error: $e');
+      throw Exception('Lỗi kết nối: $e');
     }
   }
 
-  // Lấy thời tiết hiện tại theo tọa độ GPS
-  Future<WeatherModel> getCurrentWeatherByCoordinates(double lat, double lon) async {
+  Future<WeatherModel> getCurrentWeatherByCoordinates(
+      double lat,
+      double lon,
+      ) async {
     try {
       final url = ApiConfig.buildUrl(
         ApiConfig.currentWeather,
-        {'lat': lat.toString(), 'lon': lon.toString()},
+        {
+          'lat': lat,
+          'lon': lon,
+        },
       );
+
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         return WeatherModel.fromJson(json.decode(response.body));
       } else {
-        throw Exception('Failed to load weather data');
+        throw Exception('Không thể lấy thời tiết theo vị trí');
       }
     } catch (e) {
-      throw Exception('Error: $e');
+      throw Exception('Lỗi kết nối: $e');
     }
   }
 
-  // Lấy dự báo thời tiết 5 ngày
-  Future<List<ForecastModel>> getForecast(String cityName) async {
+  Future<List<ForecastModel>> getForecast({
+    String? cityName,
+    double? lat,
+    double? lon,
+  }) async {
     try {
+      Map<String, dynamic> params = {};
+
+      if (cityName != null) {
+        params = {'q': cityName};
+      } else if (lat != null && lon != null) {
+        params = {
+          'lat': lat,
+          'lon': lon,
+        };
+      } else {
+        throw Exception('Thiếu tham số cityName hoặc lat/lon');
+      }
+
       final url = ApiConfig.buildUrl(
         ApiConfig.forecast,
-        {'q': cityName},
+        params,
       );
+
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List<dynamic> forecastList = data['list'];
-        return forecastList.map((item) => ForecastModel.fromJson(item)).toList();
+
+        return forecastList
+            .map((item) => ForecastModel.fromJson(item))
+            .toList();
       } else {
-        throw Exception('Failed to load forecast data');
+        throw Exception('Không thể lấy dữ liệu forecast');
       }
     } catch (e) {
-      throw Exception('Error: $e');
+      throw Exception('Lỗi: $e');
     }
-  }
-
-  // Lấy URL của icon thời tiết
-  String getIconUrl(String iconCode) {
-    return 'https://openweathermap.org/img/wn/$iconCode@2x.png';
   }
 }

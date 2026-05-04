@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class WeatherModel {
   final String cityName;
   final String country;
@@ -13,7 +15,11 @@ class WeatherModel {
   final double? tempMin;
   final double? tempMax;
   final int? visibility;
-  final int? cloudiness;
+  final int cloudiness;
+
+  final int sunrise;
+  final int sunset;
+  final double? uvi;
 
   WeatherModel({
     required this.cityName,
@@ -30,33 +36,40 @@ class WeatherModel {
     this.tempMin,
     this.tempMax,
     this.visibility,
-    this.cloudiness,
+    required this.cloudiness,
+    required this.sunrise,
+    required this.sunset,
+    this.uvi,
   });
 
   factory WeatherModel.fromJson(Map<String, dynamic> json) {
     return WeatherModel(
-      cityName: json['name'],
-      country: json['sys']['country'],
-      temperature: json['main']['temp'].toDouble(),
-      feelsLike: json['main']['feels_like'].toDouble(),
-      humidity: json['main']['humidity'],
-      windSpeed: json['wind']['speed'].toDouble(),
-      pressure: json['main']['pressure'],
-      description: json['weather'][0]['description'],
-      icon: json['weather'][0]['icon'],
-      mainCondition: json['weather'][0]['main'],
-      dateTime: DateTime.fromMillisecondsSinceEpoch(json['dt'] * 1000),
-      tempMin: json['main']['temp_min']?.toDouble(),
-      tempMax: json['main']['temp_max']?.toDouble(),
+      cityName: json['name'] ?? '',
+      country: json['sys']?['country'] ?? '',
+      temperature: (json['main']?['temp'] ?? 0).toDouble(),
+      feelsLike: (json['main']?['feels_like'] ?? 0).toDouble(),
+      humidity: json['main']?['humidity'] ?? 0,
+      windSpeed: (json['wind']?['speed'] ?? 0).toDouble(),
+      pressure: json['main']?['pressure'] ?? 0,
+      description: json['weather']?[0]?['description'] ?? '',
+      icon: json['weather']?[0]?['icon'] ?? '',
+      mainCondition: json['weather']?[0]?['main'] ?? '',
+      dateTime: DateTime.fromMillisecondsSinceEpoch((json['dt'] ?? 0) * 1000),
+      tempMin: json['main']?['temp_min']?.toDouble(),
+      tempMax: json['main']?['temp_max']?.toDouble(),
       visibility: json['visibility'],
-      cloudiness: json['clouds']?['all'],
+      cloudiness: json['clouds']?['all'] ?? 0,
+
+      sunrise: json['sys']?['sunrise'] ?? 0,
+      sunset: json['sys']?['sunset'] ?? 0,
+      uvi: json['uvi'] != null ? (json['uvi'] as num).toDouble() : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'name': cityName,
-      'sys': {'country': country},
+      'sys': {'country': country, 'sunrise': sunrise, 'sunset': sunset},
       'main': {
         'temp': temperature,
         'feels_like': feelsLike,
@@ -67,15 +80,20 @@ class WeatherModel {
       },
       'wind': {'speed': windSpeed},
       'weather': [
-        {
-          'description': description,
-          'icon': icon,
-          'main': mainCondition,
-        }
+        {'description': description, 'icon': icon, 'main': mainCondition},
       ],
       'dt': dateTime.millisecondsSinceEpoch ~/ 1000,
       'visibility': visibility,
       'clouds': {'all': cloudiness},
+      'uvi': uvi,
     };
+  }
+
+  String formatTime(int timestamp) {
+    final date = DateTime.fromMillisecondsSinceEpoch(
+      timestamp * 1000,
+      isUtc: true,
+    ).toLocal();
+    return DateFormat('HH:mm').format(date);
   }
 }

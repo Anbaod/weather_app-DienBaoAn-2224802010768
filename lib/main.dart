@@ -1,32 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // Thêm package này
-import 'providers/weather_provider.dart';
-import 'screens/home_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:weather_app/providers/weather_provider.dart';
+import 'package:weather_app/screens/main_screen.dart';
+import 'package:weather_app/services/location_service.dart';
+import 'package:weather_app/services/storage_service.dart';
+import 'package:weather_app/services/weather_service.dart';
 
-Future<void> main() async {
-  // Bắt buộc phải có dòng này khi hàm main là async
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Tải API Key từ file .env
+  final storageService = StorageService();
+  await initializeDateFormatting('vi_VN', null);
   await dotenv.load(fileName: ".env");
 
   runApp(
-    ChangeNotifierProvider(
-      // Tạm thời giữ nguyên, chúng ta sẽ truyền thêm LocationService và StorageService vào đây sau
-      create: (_) => WeatherProvider(),
-      child: MyApp(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => WeatherProvider(
+            WeatherService(),
+            LocationService(),
+            storageService,
+          ),
+        ),
+      ],
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Weather App',
-      home: HomeScreen(),
+      title: 'The Weather App',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
+      home: MainScreen(),
     );
   }
 }

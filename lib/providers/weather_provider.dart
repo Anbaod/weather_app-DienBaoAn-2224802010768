@@ -1,77 +1,108 @@
 import 'package:flutter/material.dart';
-import '../models/weather_model.dart';
-import '../models/forecast_model.dart';
-import '../services/weather_service.dart';
-import '../services/location_service.dart';
-import '../services/storage_service.dart';
+import 'package:intl/intl.dart';
+import 'package:weather_app/models/forecast_model.dart';
+import 'package:weather_app/models/weather_model.dart';
+import 'package:weather_app/services/location_service.dart';
+import 'package:weather_app/services/storage_service.dart';
+import 'package:weather_app/services/weather_service.dart';
 
 enum WeatherState { initial, loading, loaded, error }
 
 class WeatherProvider extends ChangeNotifier {
-  final WeatherService _weatherService = WeatherService();
-  final LocationService _locationService = LocationService();
-  final StorageService _storageService = StorageService();
+  final WeatherService _weatherService;
+  final LocationService _locationService;
+  final StorageService _storageService;
 
   WeatherModel? _currentWeather;
-  List<ForecastModel> _forecast = [];
+  List<ForecastModel> _fullForecast = [];
+  List<ForecastModel> _dailyForecast = [];
+  List<ForecastModel> get hourlyForecasts => _fullForecast;
+
   WeatherState _state = WeatherState.initial;
   String _errorMessage = '';
 
+  WeatherProvider(
+      this._weatherService,
+      this._locationService,
+      this._storageService,
+      );
+
   WeatherModel? get currentWeather => _currentWeather;
-  List<ForecastModel> get forecast => _forecast;
+  List<ForecastModel> get dailyForecasts => _dailyForecast;
   WeatherState get state => _state;
   String get errorMessage => _errorMessage;
 
-  // Lấy thời tiết theo tên thành phố
+  void _processDailyForecast() {
+    _dailyForecast = [];
+    final Set<String> processedDates = {};
+
+    final dateFormat = DateFormat('yyyy-MM-dd');
+
+    for (var item in _fullForecast) {
+      final dateStr = dateFormat.format(item.dateTime);
+
+      if (!processedDates.contains(dateStr)) {
+        processedDates.add(dateStr);
+        _dailyForecast.add(item);
+      }
+    }
+    if (_dailyForecast.length > 5) {
+      _dailyForecast = _dailyForecast.sublist(0, 5);
+    }
+  }
+
   Future<void> fetchWeatherByCity(String cityName) async {
     _state = WeatherState.loading;
     notifyListeners();
 
     try {
       _currentWeather = await _weatherService.getCurrentWeatherByCity(cityName);
-      _forecast = await _weatherService.getForecast(cityName);
+      _fullForecast = await _weatherService.getForecast(cityName: cityName);
+
+      _processDailyForecast();
+
       await _storageService.saveWeatherData(_currentWeather!);
 
       _state = WeatherState.loaded;
       _errorMessage = '';
     } catch (e) {
       _state = WeatherState.error;
-      _errorMessage = e.toString();
+      _errorMessage = "Không tìm thấy thành phố hoặc lỗi mạng.";
+      debugPrint(e.toString());
     }
     notifyListeners();
   }
 
-  // Lấy thời tiết theo vị trí hiện tại (GPS)
   Future<void> fetchWeatherByLocation() async {
     _state = WeatherState.loading;
     notifyListeners();
-
     try {
       final position = await _locationService.getCurrentLocation();
+
       _currentWeather = await _weatherService.getCurrentWeatherByCoordinates(
         position.latitude,
         position.longitude,
       );
 
-      final cityName = await _locationService.getCityName(
-        position.latitude,
-        position.longitude,
+      _fullForecast = await _weatherService.getForecast(
+          lat: position.latitude,
+          lon: position.longitude
       );
 
-      _forecast = await _weatherService.getForecast(cityName);
-      await _storageService.saveWeatherData(_currentWeather!);
+      _processDailyForecast();
 
+      await _storageService.saveWeatherData(_currentWeather!);
       _state = WeatherState.loaded;
       _errorMessage = '';
     } catch (e) {
       _state = WeatherState.error;
-      _errorMessage = e.toString();
-      await loadCachedWeather(); // Cố gắng tải dữ liệu cũ nếu lỗi mạng
+      _errorMessage = "Không thể lấy vị trí hoặc lỗi mạng.";
+      debugPrint(e.toString());
+      await loadCachedWeather();
     }
     notifyListeners();
   }
 
-  // Tải dữ liệu đã lưu (Cache)
   Future<void> loadCachedWeather() async {
     final cachedWeather = await _storageService.getCachedWeather();
     if (cachedWeather != null) {
@@ -81,7 +112,6 @@ class WeatherProvider extends ChangeNotifier {
     }
   }
 
-  // Làm mới dữ liệu
   Future<void> refreshWeather() async {
     if (_currentWeather != null) {
       await fetchWeatherByCity(_currentWeather!.cityName);
@@ -89,4 +119,19 @@ class WeatherProvider extends ChangeNotifier {
       await fetchWeatherByLocation();
     }
   }
+
+
+  // Section Code Block For Setting
+  bool _isCelsius = true;
+  bool get isCelsius => _isCelsius;
+
+  void toggleUnit() {
+    _isCelsius = !_isCelsius;
+    notifyListeners();
+  }
+
+  double getTemperature(double tempInCelsius) {
+    return _isCelsius ? tempInCelsius : (tempInCelsius * 9 / 5) + 32;
+  }
+  String get unitSymbol => _isCelsius ? "°C" : "°F";
 }
